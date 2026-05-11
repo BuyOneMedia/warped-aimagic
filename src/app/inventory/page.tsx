@@ -10,8 +10,9 @@ import {
   Package, Plus, Search, Filter, Edit, Trash2, Eye, 
   Upload, BarChart, DollarSign, AlertCircle, CheckCircle,
   ShoppingCart, Send, FileText, Image as ImageIcon,
-  Download, X, ChevronDown, FileSpreadsheet
+  Download, X, ChevronDown, FileSpreadsheet, MoreVertical
 } from 'lucide-react'
+import DirectPostDropdown from '@/components/DirectPostDropdown'
 
 interface Product {
   id: string
@@ -1253,6 +1254,10 @@ export default function InventoryPage() {
                             >
                               <Send className="w-4 h-4 text-muted-foreground" />
                             </button>
+                            <DirectPostDropdown 
+                              productId={product.id} 
+                              productTitle={product.title} 
+                            />
                             <button
                               onClick={() => deleteProduct(product.id)}
                               className="p-1 rounded hover:bg-muted"

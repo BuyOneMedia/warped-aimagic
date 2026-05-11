@@ -20,7 +20,11 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@heroicons/react": "^2.2.0",
+    "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^6.14.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
     "@swc/helpers": "^0.5.17",
     "@tanstack/react-query": "^5.85.3",
     "@tanstack/react-query-devtools": "^5.85.3",
@@ -38,6 +42,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "sharp": "^0.34.3",
+    "tailwind-merge": "^3.6.0",
     "uuid": "^11.1.0",
     "zod": "^4.1.0"
   },
