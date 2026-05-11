@@ -11,8 +11,128 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────
+// AUTH MODELS (NextAuth.js)
+// ─────────────────────────────────────────
+
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  emailVerified       DateTime?
+  name                String?
+  image               String?
+  password            String?              // bcrypt hashed
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  products            Product[]
+  platformConnections PlatformConnection[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────
+// PLATFORM POSTING MODELS
+// ─────────────────────────────────────────
+
+enum PostingPlatform {
+  EBAY
+  ETSY
+  FACEBOOK
+  CRAIGSLIST
+  OFFERUP
+}
+
+enum PostingStatus {
+  PENDING
+  POSTING
+  SUCCESS
+  FAILED
+}
+
+model PlatformConnection {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform     PostingPlatform
+  // OAuth platforms (eBay, Etsy): store encrypted tokens
+  accessToken  String?         @db.Text
+  refreshToken String?         @db.Text
+  expiresAt    DateTime?
+  // Browser-automated platforms (Facebook, Craigslist, OfferUp): store encrypted credentials
+  credentials  Json?           // { email: encrypted, password: encrypted, area?: encrypted }
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([userId, platform])
+  @@map("platform_connections")
+}
+
+model PlatformListing {
+  id                String          @id @default(cuid())
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  platform          PostingPlatform
+  status            PostingStatus   @default(PENDING)
+  platformListingId String?         // The ID assigned by the external platform
+  url               String?         // Live URL on the external platform
+  error             String?         @db.Text
+  jobId             String?         // BullMQ job ID for status tracking
+  postedAt          DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("platform_listings")
+}
+
+// ─────────────────────────────────────────
+// CORE PRODUCT MODELS
+// ─────────────────────────────────────────
+
 model Product {
   id                    String   @id @default(cuid())
+  // Owner (optional for backwards compatibility — null = unowned/global)
+  userId                String?
+  user                  User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   upc                   String?  @unique
   ean                   String?
   gtin                  String?
@@ -41,6 +161,7 @@ model Product {
   drafts                Draft[]
   aiContent             AIContent?
   marketResearch        MarketResearch[]
+  platformListings      PlatformListing[]
   
   // Legacy fields for compatibility
   name                  String?  // alias for title
